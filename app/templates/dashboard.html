@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-gray-800">Dashboard</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for section in dashboard_data %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-700 text-center">{{ section.section_name }}</h2>
+        <canvas id="chart-{{ loop.index }}"></canvas>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        {% for section in dashboard_data %}
+        var ctx{{ loop.index }} = document.getElementById('chart-{{ loop.index }}').getContext('2d');
+        new Chart(ctx{{ loop.index }}, {
+            type: 'pie',
+            data: {
+                labels: ['Good', 'Alert', 'Bad'],
+                datasets: [{
+                    data: {{ section.data | tojson }},
+                    backgroundColor: [
+                        '#10B981', // Emerald
+                        '#F59E0B', // Amber
+                        '#F43F5E'  // Rose
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        {% endfor %}
+    });
+</script>
+{% endblock %}

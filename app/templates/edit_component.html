@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-gray-800">Edit Component: {{ component.name }}</h1>
+
+<div class="bg-white rounded shadow-md p-6 max-w-lg">
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="mb-4">
+            {{ form.unique_id.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.unique_id(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+            {% for error in form.unique_id.errors %}
+            <span class="text-red-500 text-xs italic">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="mb-4">
+            {{ form.name.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.name(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+            {% for error in form.name.errors %}
+            <span class="text-red-500 text-xs italic">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="mb-4">
+            {{ form.section_id.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.section_id(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+        </div>
+        <div class="flex space-x-4 mb-4">
+            <div class="flex-1">
+                {{ form.expiry_date.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.expiry_date(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700", type="date") }}
+            </div>
+            <div class="flex-1">
+                {{ form.expiry_time.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.expiry_time(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700", type="time") }}
+            </div>
+        </div>
+        <div class="flex space-x-4 mb-4">
+            <div class="flex-1">
+                {{ form.interval_days.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.interval_days(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+            </div>
+            <div class="flex-1">
+                {{ form.interval_hours.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.interval_hours(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer", value="Save Changes") }}
+            <a href="{{ url_for('main.manage_components') }}" class="text-gray-600 hover:text-gray-800">Cancel</a>
+        </div>
+    </form>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        flatpickr("#expiry_date", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+        });
+        flatpickr("#expiry_time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: false,
+            altInput: true,
+            altFormat: "h:i K",
+        });
+    });
+</script>
+{% endblock %}

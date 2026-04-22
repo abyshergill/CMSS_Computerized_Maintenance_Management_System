@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-gray-800">Manage Components</h1>
+
+<div class="bg-white rounded shadow-md p-6 mb-8 max-w-lg">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">Add New Component</h2>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="mb-4">
+            {{ form.unique_id.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.unique_id(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+        </div>
+        <div class="mb-4">
+            {{ form.name.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.name(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+        </div>
+        <div class="mb-4">
+            {{ form.section_id.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.section_id(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+        </div>
+        <div class="flex space-x-4 mb-4">
+            <div class="flex-1">
+                {{ form.expiry_date.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.expiry_date(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700", type="date") }}
+            </div>
+            <div class="flex-1">
+                {{ form.expiry_time.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.expiry_time(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700", type="time") }}
+            </div>
+        </div>
+        <div class="flex space-x-4 mb-4">
+            <div class="flex-1">
+                {{ form.interval_days.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.interval_days(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+                {% for error in form.interval_days.errors %}
+                <span class="text-red-500 text-xs italic">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+            <div class="flex-1">
+                {{ form.interval_hours.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.interval_hours(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+                {% for error in form.interval_hours.errors %}
+                <span class="text-red-500 text-xs italic">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+        </div>
+        {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded") }}
+    </form>
+</div>
+
+<div class="bg-white rounded shadow-md p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-700">Existing Components</h2>
+        <div class="w-1/3">
+            <input type="text" id="idSearchInput" onkeyup="filterTable()" placeholder="Search by Unique ID..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+    </div>
+    <table class="min-w-full leading-normal" id="componentsTable">
+        <thead>
+            <tr>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Section</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expiry</th>
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in components %}
+            <tr>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ c.unique_id }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ c.name }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ c.section.name if c.section else 'None' }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ c.expiry_date.strftime('%Y-%m-%d %H:%M') if c.expiry_date else 'N/A' }}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <div class="flex space-x-2">
+                        <a href="{{ url_for('main.component_detail', id=c.id) }}" class="text-blue-500 hover:text-blue-800 font-semibold">View</a>
+                        <a href="{{ url_for('main.edit_component', id=c.id) }}" class="text-amber-500 hover:text-amber-800 font-semibold">Edit</a>
+                        <form action="{{ url_for('main.delete_component', id=c.id) }}" method="post" onsubmit="return confirm('Delete this component?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-rose-500 hover:text-rose-800 font-semibold">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        flatpickr("#expiry_date", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+        });
+        flatpickr("#expiry_time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: false,
+            altInput: true,
+            altFormat: "h:i K",
+        });
+    });
+
+    function filterTable() {
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("idSearchInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("componentsTable");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 1; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[0]; // Column index 0 is ID
+            if (td) {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}
