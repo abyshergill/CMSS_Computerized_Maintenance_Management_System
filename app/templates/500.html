@@ -1,10 +1,17 @@
 {% extends "base.html" %}
+{% block title %}500 · Server Error{% endblock %}
+{% block topbar_title %}Server Error{% endblock %}
 
 {% block content %}
-<div class="text-center py-20">
-    <h1 class="text-6xl font-bold text-gray-800 mb-4">500</h1>
-    <p class="text-2xl text-gray-600 mb-8">Internal Server Error</p>
-    <p>The administrator has been notified. Sorry for the inconvenience!</p>
-    <a href="{{ url_for('main.index') }}" class="text-blue-500 hover:underline">Go Back to Dashboard</a>
+<div class="error-shell">
+    <div>
+        <div class="error-code">500</div>
+        <div class="error-title">Internal Server Error</div>
+        <p class="error-desc">Something went wrong on our end. The administrator has been notified — sorry for the inconvenience!</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back to Dashboard
+        </a>
+    </div>
 </div>
 {% endblock %}

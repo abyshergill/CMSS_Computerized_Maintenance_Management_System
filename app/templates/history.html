@@ -1,64 +1,74 @@
 {% extends "base.html" %}
+{% block title %}{{ component.name }} · History{% endblock %}
+{% block topbar_title %}Component History{% endblock %}
+
 {% block content %}
-<h1 class="text-3xl font-bold mb-6 text-gray-800">{{ component.name }} (ID: {{ component.unique_id }})</h1>
-<div class="mb-4 flex space-x-4">
-    <span class="px-3 py-1 rounded-full text-sm font-bold text-white {% if component.status == 'Good' %}bg-emerald-500{% elif component.status == 'Alert' %}bg-amber-500{% else %}bg-rose-500{% endif %}">
-        Current Status: {{ component.status }}
-    </span>
-    {% if component.expiry_date %}
-    <span class="px-3 py-1 rounded-full text-sm font-bold bg-gray-200 text-gray-700">
-        Expiry: {{ component.expiry_date.strftime('%Y-%m-%d %H:%M') }}
-    </span>
-    {% endif %}
+<div class="page-header">
+    <div>
+        <h1>{{ component.name }}</h1>
+        <div class="subtitle">
+            ID: <code style="background:var(--surface-2); padding:2px 8px; border-radius:4px;">{{ component.unique_id }}</code>
+        </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <span class="pill {% if component.status == 'Good' %}pill-good{% elif component.status == 'Alert' %}pill-alert{% else %}pill-bad{% endif %}">{{ component.status }}</span>
+        {% if component.expiry_date %}
+        <span class="pill pill-neutral">Expiry: {{ component.expiry_date.strftime('%Y-%m-%d %H:%M') }}</span>
+        {% endif %}
+    </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+<div class="grid grid-2">
+
     <!-- Log Form -->
-    <div class="bg-white rounded shadow-md p-6">
-        <h2 class="text-xl font-bold mb-4 text-gray-700">Add Maintenance Log</h2>
+    <div class="card">
+        <div class="card-header"><h2>Add Maintenance Log</h2></div>
         <form method="post" enctype="multipart/form-data" novalidate>
             {{ form.hidden_tag() }}
-            <div class="mb-4">
-                {{ form.notes.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.notes(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 h-32") }}
+            <div class="form-group">
+                {{ form.notes.label }}
+                {{ form.notes(rows=5) }}
             </div>
-            <div class="mb-4">
-                {{ form.status_update.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.status_update(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
+            <div class="form-group">
+                {{ form.status_update.label }}
+                {{ form.status_update() }}
             </div>
-            <div class="mb-4">
-                {{ form.file.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-                {{ form.file(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
-                {% for error in form.file.errors %}
-                <span class="text-red-500 text-xs italic">[{{ error }}]</span>
-                {% endfor %}
+            <div class="form-group">
+                {{ form.file.label }}
+                {{ form.file() }}
+                {% for error in form.file.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
             </div>
-            {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer") }}
+            {{ form.submit(class="btn btn-primary") }}
         </form>
     </div>
 
     <!-- Timeline -->
-    <div class="bg-white rounded shadow-md p-6">
-        <h2 class="text-xl font-bold mb-4 text-gray-700">History Timeline</h2>
-        <div class="space-y-6 border-l-2 border-gray-200 pl-4">
+    <div class="card">
+        <div class="card-header"><h2>History Timeline</h2></div>
+        {% if logs %}
+        <div class="timeline">
             {% for log in logs %}
-            <div class="relative">
-                <div class="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-blue-500 border-2 border-white"></div>
-                <p class="text-sm text-gray-500">{{ log.date.strftime('%Y-%m-%d %H:%M') }} by {{ log.author.username }}</p>
-                <div class="mt-2 text-gray-800">{{ log.notes | safe }}</div>
-                {% if log.file_path %}
-                <div class="mt-2">
-                    <a href="{{ url_for('static', filename='uploads/' + log.file_path) }}" target="_blank" class="text-blue-500 text-sm hover:underline flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                        View Attachment
-                    </a>
+            <div class="timeline-item">
+                <div class="timeline-date">
+                    {{ log.date.strftime('%Y-%m-%d %H:%M') }} · by <strong>{{ log.author.username }}</strong>
                 </div>
+                <div class="timeline-content">{{ log.notes | safe }}</div>
+                {% if log.file_path %}
+                <a href="{{ url_for('static', filename='uploads/' + log.file_path) }}" target="_blank" class="attachment-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    View Attachment
+                </a>
                 {% endif %}
             </div>
-            {% else %}
-            <p class="text-gray-500 italic">No history found.</p>
             {% endfor %}
         </div>
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <h3>No history yet</h3>
+            <p>Maintenance logs will appear here once added.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

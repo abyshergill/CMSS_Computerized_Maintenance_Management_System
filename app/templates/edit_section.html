@@ -1,20 +1,27 @@
 {% extends "base.html" %}
-{% block content %}
-<h1 class="text-3xl font-bold mb-6 text-gray-800">Edit Section</h1>
+{% block title %}Edit Section · CMMS{% endblock %}
+{% block topbar_title %}Edit Section{% endblock %}
 
-<div class="bg-white rounded shadow-md p-6 max-w-md">
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Edit Section</h1>
+        <div class="subtitle">Update the name of this section.</div>
+    </div>
+    <a href="{{ url_for('main.manage_sections') }}" class="btn btn-ghost">&larr; Back</a>
+</div>
+
+<div class="card" style="max-width:520px;">
     <form method="post" novalidate>
         {{ form.hidden_tag() }}
-        <div class="mb-4">
-            {{ form.name.label(class="block text-gray-700 text-sm font-bold mb-2") }}
-            {{ form.name(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700") }}
-            {% for error in form.name.errors %}
-            <span class="text-red-500 text-xs italic">[{{ error }}]</span>
-            {% endfor %}
+        <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name() }}
+            {% for error in form.name.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
         </div>
-        <div class="flex items-center space-x-4">
-            {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer", value="Save Changes") }}
-            <a href="{{ url_for('main.manage_sections') }}" class="text-gray-600 hover:text-gray-800">Cancel</a>
+        <div class="form-actions">
+            {{ form.submit(class="btn btn-primary", value="Save Changes") }}
+            <a href="{{ url_for('main.manage_sections') }}" class="btn btn-ghost">Cancel</a>
         </div>
     </form>
 </div>
