@@ -20,8 +20,8 @@ Before you begin, ensure you have Python 3.8 or higher installed on your system.
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repository-url>
-cd CMMS_Computerized_Management_System
+git clone git@github.com:abyshergill/CMSS_Computerized_Maintenance_Management_System.git
+cd CMSS_Computerized_Maintenance_Management_System
 ```
 
 ### 2. Set Up a Virtual Environment
