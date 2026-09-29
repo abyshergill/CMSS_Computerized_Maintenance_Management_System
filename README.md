@@ -1,6 +1,6 @@
 # CMMS - Computerized Maintenance Management System
 
-A Flask-based Computerized Maintenance Management System (CMMS) designed to track equipment status, manage maintenance logs, and monitor component lifecycles with expiry dates and image uploads.
+A Django-based Computerized Maintenance Management System for tracking equipment status, maintenance history, component expiry dates, alerts, and controlled maintenance uploads.
 
 ## Features
 
@@ -13,7 +13,7 @@ A Flask-based Computerized Maintenance Management System (CMMS) designed to trac
 
 ## Prerequisites
 
-Before you begin, ensure you have Python 3.8 or higher installed on your system.
+Python 3.12 or higher is recommended. This repository uses the existing `virtual_cmss` environment on macOS/Linux.
 
 ## Getting Started
 
@@ -28,57 +28,42 @@ cd CMSS_Computerized_Maintenance_Management_System
 
 It is highly recommended to use a virtual environment to manage project dependencies.
 
-#### On Windows:
 ```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### On macOS and Linux:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-
-Once the virtual environment is activated, install the required packages:
-
-```bash
+source virtual_cmss/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Initialize the Database
-
-The project uses Flask-Migrate for database management. Run the following commands to set up the local database:
+### 3. Initialize the Django Database
 
 ```bash
-flask db upgrade
+export DJANGO_DEBUG=1
+export DJANGO_SECRET_KEY='local-development-secret-change-me'
+python manage.py migrate
 ```
-
-*Note: This will create an `app.db` file (SQLite) in the root directory.*
 
 ## Running the Application
 
-To start the development server, run:
+Start the Django development server with:
 
 ```bash
-python cmms.py
+python manage.py runserver
 ```
 
-Or using Flask CLI:
+### Recurring Preventive Maintenance
+
+Admins can create daily, weekly, monthly, or yearly jobs from **Recurring jobs** in the navigation. Choose the local time and IANA timezone; work orders are generated the selected number of days ahead. Exclude weekdays, calendar days, months, or one-time dates; a match skips that occurrence without shifting it, while the schedule continues at its next normal interval. Monthly days beyond a month's length use its final day, and February 29 schedules use February 28 in non-leap years. Pausing a schedule does not remove previously generated work orders.
+
+To generate scheduled work orders automatically, run this Django command every minute using cron, launchd, or your deployment scheduler:
 
 ```bash
-export FLASK_APP=cmms.py
-flask run
+./virtual_cmss/bin/python manage.py generate_preventive_work_orders
 ```
-*(Use `set FLASK_APP=cmms.py` on Windows CMD or `$env:FLASK_APP = "cmms.py"` on PowerShell)*
 
-The application will be available at `http://127.0.0.1:5000/`.
+The command is safe to run repeatedly; a database uniqueness constraint prevents duplicate work orders for a schedule occurrence. For local testing, it can be run manually; recurring jobs will not generate automatically unless this command is scheduled.
 
 ## How to Use the Application
 
-1.  **Register/Login:** Create an account or log in to access the dashboard.
+1.  **Register/Login:** Log in with a Django user. An administrator can register additional users.
 2.  **Manage Sections:** Start by creating "Sections" (e.g., "Engine Room", "Assembly Line") to group your components.
 3.  **Add Components:** Inside each section, add components or machines. You can specify a unique ID, name, and an **expiry date**.
 4.  **Monitor Alerts:** The dashboard or "Alert Hub" will show components that are in an "Alert" or "Bad" status based on their expiry dates or manually updated status.
@@ -88,13 +73,36 @@ The application will be available at `http://127.0.0.1:5000/`.
     *   **Upload a picture** of the work performed or the part replaced.
 6.  **Track History:** View the full maintenance history of any component to see past repairs and uploaded images.
 
+## Legacy Data Import
+
+Import the existing Flask SQLite database without modifying it:
+
+```bash
+python manage.py import_legacy --database app.db --dry-run
+python manage.py import_legacy --database app.db
+```
+
+The import is idempotent by legacy primary key. Imported users receive unusable Django passwords because Werkzeug hashes are not automatically portable; issue password resets before production use.
+
+## Security and Validation
+
+The Django app uses ORM queries, CSRF middleware, POST-only state changes, role checks, secure cookies, environment-provided secrets, password validation, escaped templates, upload size/signature checks, and transactional component updates.
+
+```bash
+DJANGO_DEBUG=1 python manage.py test cmms
+DJANGO_DEBUG=1 python manage.py check
+python -m pytest -q
+```
+
+For deployment, set `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, HTTPS, HSTS, and a production database/media storage policy explicitly.
+
 ## Project Structure
 
-- `app/`: Main application package containing routes, models, and templates.
-- `app/static/uploads/`: Directory where maintenance images are stored.
-- `migrations/`: Database migration scripts.
-- `cmms.py`: Main entry point for the application.
-- `config.py`: Configuration settings for the Flask app.
+- `cmms/`: Django application containing models, forms, views, services, migrations, and tests.
+- `config/`: Django settings, URL configuration, WSGI, and ASGI entry points.
+- `templates/`: Django templates.
+- `manage.py`: Django management entry point.
+- `app/` and `migrations/`: Legacy Flask implementation retained for reference and data import.
 
 ## License
 
