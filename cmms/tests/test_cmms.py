@@ -66,6 +66,69 @@ class CmmsTests(TestCase):
         self.login(self.authorized)
         self.assertEqual(self.client.get(reverse("cmms:manage-sections")).status_code, 403)
         self.assertEqual(self.client.post(reverse("cmms:delete-component", args=[self.component.pk])).status_code, 403)
+        self.assertEqual(self.client.get(reverse("cmms:manage-users")).status_code, 403)
+
+    def test_admin_can_view_all_users_including_inactive_and_superuser_accounts(self):
+        inactive_user = User.objects.create_user(username="former-worker", password="Strong-password-123", is_active=False)
+        superuser = User.objects.create_superuser(username="platform-admin", password="Strong-password-123")
+        self.login(self.admin)
+
+        response = self.client.get(reverse("cmms:manage-users"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["user_count"], 4)
+        self.assertContains(response, self.admin.username)
+        self.assertContains(response, self.authorized.username)
+        self.assertContains(response, inactive_user.username)
+        self.assertContains(response, superuser.username)
+        self.assertContains(response, "Inactive")
+        self.assertContains(response, "Superuser")
+        self.assertContains(response, "Add team member")
+
+    def test_user_directory_search_matches_names_and_shows_empty_state(self):
+        self.authorized.first_name = "Morgan"
+        self.authorized.save(update_fields=["first_name"])
+        self.login(self.admin)
+
+        response = self.client.get(reverse("cmms:manage-users"), {"q": "morg"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["user_count"], 1)
+        self.assertEqual(list(response.context["users"].values_list("username", flat=True)), [self.authorized.username])
+        self.assertContains(response, "Clear search")
+
+        response = self.client.get(reverse("cmms:manage-users"), {"q": "not-a-real-user"})
+        self.assertContains(response, "No matching users")
+
+        payload = "<script>alert(1)</script>"
+        response = self.client.get(reverse("cmms:manage-users"), {"q": payload})
+        self.assertNotContains(response, payload)
+        self.assertContains(response, "&lt;script&gt;", html=False)
+
+    def test_user_directory_redirects_anonymous_users_and_hides_navigation_from_workers(self):
+        response = self.client.get(reverse("cmms:manage-users"))
+        self.assertRedirects(response, f"{reverse('cmms:login')}?next={reverse('cmms:manage-users')}")
+
+        self.login(self.authorized)
+        response = self.client.get(reverse("cmms:dashboard"))
+        self.assertNotContains(response, reverse("cmms:manage-users"))
+
+    def test_admin_can_create_user_and_returns_to_user_directory(self):
+        self.login(self.admin)
+
+        response = self.client.get(reverse("cmms:register"))
+        self.assertContains(response, "Admin users can also manage accounts and settings.")
+
+        response = self.client.post(reverse("cmms:register"), {
+            "username": "new-technician",
+            "role": User.Roles.AUTHORIZED,
+            "password1": "Strong-password-456",
+            "password2": "Strong-password-456",
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("cmms:manage-users"))
+        self.assertTrue(User.objects.filter(username="new-technician", role=User.Roles.AUTHORIZED).exists())
+        self.assertContains(self.client.get(reverse("cmms:manage-users")), "Account for new-technician created.")
 
     def test_admin_can_add_section(self):
         self.login(self.admin)

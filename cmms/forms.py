@@ -17,7 +17,10 @@ class LoginForm(forms.Form):
 
 
 class RegistrationForm(UserCreationForm):
-    role = forms.ChoiceField(choices=User.Roles.choices)
+    role = forms.ChoiceField(
+        choices=User.Roles.choices,
+        help_text="Authorized users can work in the CMMS. Admin users can also manage accounts and settings.",
+    )
 
     class Meta:
         model = User

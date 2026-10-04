@@ -6,13 +6,14 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import ComponentEditLogForm, ComponentForm, LoginForm, MaintenanceLogForm, PreventiveScheduleForm, RegistrationForm, SectionForm, WorkOrderForm
-from .models import AlertSettings, Component, PreventiveSchedule, Section, WorkOrder
+from .models import AlertSettings, Component, PreventiveSchedule, Section, User, WorkOrder
 from .services import refresh_component_statuses
 
 
@@ -64,10 +65,28 @@ def logout_view(request):
 def register(request):
     form = RegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "User registered.")
-        return redirect("cmms:dashboard")
+        user = form.save()
+        messages.success(request, f"Account for {user.username} created.")
+        return redirect("cmms:manage-users")
     return render(request, "cmms/register.html", {"form": form})
+
+
+@cmms_admin_required
+def manage_users(request):
+    search_query = request.GET.get("q", "").strip()
+    users = User.objects.all()
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query)
+            | Q(first_name__icontains=search_query)
+            | Q(last_name__icontains=search_query)
+        )
+    users = users.order_by("username")
+    return render(
+        request,
+        "cmms/manage_users.html",
+        {"users": users, "search_query": search_query, "user_count": users.count()},
+    )
 
 
 @login_required

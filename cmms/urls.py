@@ -11,6 +11,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("dashboard/", views.dashboard, name="dashboard-alias"),
     path("register/", views.register, name="register"),
+    path("users/", views.manage_users, name="manage-users"),
     path("alerts/", views.alert_hub, name="alert-hub"),
     path("sections/", views.manage_sections, name="manage-sections"),
     path("sections/<int:pk>/edit/", views.edit_section, name="edit-section"),
